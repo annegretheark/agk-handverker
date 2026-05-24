@@ -1,0 +1,6 @@
+.env
+config.local.js
+backup*
+*.zip
+*.sql
+node_modules/
