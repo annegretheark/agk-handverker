@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+  <meta charset="UTF-8">
+  <title>Timeregistrering</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Din config -->
+  <script src="config.js"></script>
+
+  <!-- Ansatte -->
+  <script src="ansatte.js" defer></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    input {
+      display: block;
+      margin: 5px 0;
+      padding: 8px;
+      width: 250px;
+    }
+
+    button {
+      margin: 5px 5px 5px 0;
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    table {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+    }
+
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #eee;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>Ansattregister</h1>
+
+<!-- SKJEMA -->
+<input type="hidden" id="ansattId">
+
+<input type="text" id="ansattNavn" placeholder="Navn">
+<input type="email" id="ansattEpost" placeholder="E-post">
+<input type="text" id="ansattMobil" placeholder="Mobil">
+
+<button id="lagreAnsattKnapp">Lagre ansatt</button>
+<button id="nyAnsattKnapp">Ny</button>
+
+<!-- TABELL -->
+<table>
+  <thead>
+    <tr>
+      <th>Navn</th>
+      <th>E-post</th>
+      <th>Mobil</th>
+      <th>Handling</th>
+    </tr>
+  </thead>
+  <tbody id="ansattListe"></tbody>
+</table>
+
+</body>
+</html>
