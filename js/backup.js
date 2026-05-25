@@ -71,7 +71,7 @@ async function lagreBackupFil(
       { type: "application/json" }
     );
 
-  if (window.showSaveFilePicker) {
+  if (window.showSaveFilePicker && prefix !== "NODBACKUP_for_restore") {s
 
     const fil =
       await window.showSaveFilePicker({
