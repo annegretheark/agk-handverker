@@ -651,6 +651,31 @@
 <script src="js/tester.js?v=20"></script>
 <script src="js/varer.js?v=20"></script>
 <script src="js/app.js?v=20"></script>
+<script>
+window.addEventListener("load", function () {
+  const loginKnapp = document.getElementById("loginKnapp");
+  const glemtKnapp = document.getElementById("glemtPassordKnapp");
 
+  if (loginKnapp) {
+    loginKnapp.onclick = function () {
+      if (typeof loggInn === "function") {
+        loggInn();
+      } else {
+        alert("Feil: loggInn finnes ikke. auth.js er ikke lastet.");
+      }
+    };
+  }
+
+  if (glemtKnapp) {
+    glemtKnapp.onclick = function () {
+      if (typeof glemtPassord === "function") {
+        glemtPassord();
+      } else {
+        alert("Feil: glemtPassord finnes ikke. auth.js er ikke lastet.");
+      }
+    };
+  }
+});
+</script>
 </body>
 </html>
