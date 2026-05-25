@@ -31,6 +31,12 @@ async function visApp() {
   visElement("appSide");
 
   oppdaterAdminVisning();
+  if (typeof lastModulerFraDatabase === "function") {
+  await lastModulerFraDatabase();
+}
+  if (typeof oppdaterModulVisning === "function") {
+  oppdaterModulVisning();
+}
 
   if (typeof lastKunder === "function") await lastKunder();
   if (typeof lastProsjekter === "function") await lastProsjekter();
@@ -129,6 +135,7 @@ function visTestSide() {
   visElement("testSide");
 }
 
+
 window.visLogin = visLogin;
 window.visNyttPassord = visNyttPassord;
 window.visApp = visApp;
@@ -138,3 +145,31 @@ window.visAnsattSide = visAnsattSide;
 window.visFirmaSide = visFirmaSide;
 window.visTestSide = visTestSide;
 window.visLonnSide = visLonnSide;
+function oppdaterModulVisning() {
+  if (typeof modulAktiv !== "function") {
+    return;
+  }
+
+  const regler = [
+    { modul: "varer", knapp: "varerKnapp" },
+    { modul: "lonn", knapp: "visLonnKnapp" },
+    { modul: "prosjekter", felt: "prosjektValg" },
+    { modul: "backup", knapp: "backupKnapp" }
+  ];
+
+  regler.forEach(r => {
+    const el =
+      document.getElementById(r.knapp) ||
+      document.getElementById(r.felt);
+
+    if (!el) return;
+
+    if (!modulAktiv(r.modul)) {
+      el.style.display = "none";
+    } else {
+      el.style.display = "";
+    }
+  });
+}
+
+window.oppdaterModulVisning = oppdaterModulVisning;

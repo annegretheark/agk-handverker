@@ -1,19 +1,44 @@
-window.AGK_MODULER = {
-  timer: true,
-  kunder: true,
-  ansatte: true,
-  firma: true,
+console.log("moduler.js lastet");
 
-  faktura: true,
-  kreditnota: true,
-  purring: true,
+window.AGK_MODULER = {};
 
-  varer: false,
-  lager: false,
-  lonn: false,
+async function lastModulerFraDatabase() {
 
-  hovslager: true
-};
-window.modulAktiv = function(navn) {
-    return !!window.AGK_MODULER[navn];
-};
+  const { data, error } =
+    await supabaseClient
+      .from("moduler")
+      .select("*");
+
+  if (error) {
+    console.error(error);
+    return;
+  }
+
+  window.AGK_MODULER = {};
+
+  for (const modul of data) {
+
+    window.AGK_MODULER[
+      modul.navn
+    ] = modul.aktiv;
+
+  }
+
+  if (
+    typeof oppdaterModulVisning ===
+    "function"
+  ) {
+    oppdaterModulVisning();
+  }
+}
+
+function modulAktiv(navn) {
+
+  return !!window.AGK_MODULER[navn];
+
+}
+
+window.modulAktiv = modulAktiv;
+
+window.lastModulerFraDatabase =
+  lastModulerFraDatabase;

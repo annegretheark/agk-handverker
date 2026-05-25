@@ -318,17 +318,19 @@ async function lagreTimer() {
       return;
     }
   }
-
-  const { error } = await supabaseClient
-    .from("timer")
-    .insert([supabaseTimer]);
-
+const { data, error } = await supabaseClient
+  .from("timer")
+  .insert([supabaseTimer])
+  .select()
+  .single();
   if (error) {
     console.error("Feil ved lagring av timer:", error);
     if (melding) melding.textContent = "Feil ved lagring av timer: " + error.message;
     return;
   }
-
+if (data?.id) {
+  await lastOppTimerBilde(data.id);
+}
   await lastTimer();
   nullstillSkjema();
 
@@ -794,3 +796,75 @@ window.lastTimer = lastTimer;
 window.lagreTimer = lagreTimer;
 window.settDagensDato = settDagensDato;
 window.tegnTimer = tegnTimer;
+async function lastOppTimerBilde(timerId) {
+
+ const filInputGalleri =
+  document.getElementById(
+    "timerBildeGalleri"
+  );
+
+const filInputKamera =
+  document.getElementById(
+    "timerBildeKamera"
+  );
+
+const filInput =
+  (
+    filInputKamera &&
+    filInputKamera.files &&
+    filInputKamera.files.length > 0
+  )
+    ? filInputKamera
+    : filInputGalleri;
+
+  const tekstInput =
+    document.getElementById(
+      "timerBildeTekst"
+    );
+
+  if (
+    !filInput ||
+    !filInput.files ||
+    filInput.files.length === 0
+  ) {
+    return;
+  }
+
+  const fil =
+    filInput.files[0];
+
+  const filnavn =
+    timerId +
+    "/" +
+    Date.now() +
+    "_" +
+    fil.name.replaceAll(" ", "_");
+
+  const { error: uploadError } =
+    await supabaseClient
+      .storage
+      .from("timer-bilder")
+      .upload(
+        filnavn,
+        fil
+      );
+
+  if (uploadError) {
+    throw uploadError;
+  }
+
+  const { error: dbError } =
+    await supabaseClient
+      .from("timer_bilder")
+      .insert({
+        timer_id: timerId,
+        filnavn: fil.name,
+        filsti: filnavn,
+        bildetekst:
+          tekstInput?.value || ""
+      });
+
+  if (dbError) {
+    throw dbError;
+  }
+}
