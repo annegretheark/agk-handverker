@@ -341,3 +341,22 @@ window.loggInn = loggInn;
 window.loggUt = loggUt;
 window.glemtPassord = glemtPassord;
 window.lagreNyttPassord = lagreNyttPassord;
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  document
+    .getElementById("loginKnapp")
+    ?.addEventListener("click", loggInn);
+
+  document
+    .getElementById("glemtPassordKnapp")
+    ?.addEventListener("click", glemtPassord);
+
+  document
+    .getElementById("loggUtKnapp")
+    ?.addEventListener("click", loggUt);
+
+  document
+    .getElementById("lagreNyttPassordKnapp")
+    ?.addEventListener("click", lagreNyttPassord);
+});
