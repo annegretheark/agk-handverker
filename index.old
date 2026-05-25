@@ -142,7 +142,7 @@
     </label>
 
     <button id="loginKnapp" type="button">Logg inn</button>
-    <button id="glemtPassordKnapp" type="button" class="secondary">Glemt passord</button>
+    <button id="glem<button id="glemtPassordKnapp" type="button" class="secondary">Glemt passord</button>tPassordKnapp" type="button" class="secondary" onclick="glemtPassord()">Glemt passord</button>
 
     <div id="loginMelding" class="melding"></div>
   </section>
@@ -625,11 +625,11 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="js/core/config.js"></script>
   <script src="js/core/moduler.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/core/state.js"></script>
   <script src="js/navigation.js"></script>
-  <script src="js/auth.js"></script>
+  <script src="js/core/config.js"></script>
   <script src="js/kunder.js"></script>
   <script src="js/prosjekter.js"></script>
   <script src="js/ansatte.js"></script>
