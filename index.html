@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html lang="no">
 <head>
-  <meta charset="UTF-8">
-  <title>Timeregistrering</title>
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
@@ -628,54 +626,56 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+ <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-  <script src="js/core/config.js?v=22"></script>
-  <script src="js/core/moduler.js?v=22"></script>
-  <script src="js/core/state.js?v=22"></script>
-  <script src="js/navigation.js?v=22"></script>
-  <script src="js/auth.js?v=22"></script>
-  <script src="js/kunder.js?v=22"></script>
-  <script src="js/prosjekter.js?v=22"></script>
-  <script src="js/ansatte.js?v=22"></script>
-  <script src="js/firma.js?v=22"></script>
-  <script src="js/timer.js?v=22"></script>
-  <script src="js/utils.js?v=22"></script>
-  <script src="js/fakturaData.js?v=22"></script>
-  <script src="js/pdfLayout.js?v=22"></script>
-  <script src="js/fakturaPdf.js?v=22"></script>
-  <script src="js/faktura.js?v=22"></script>
-  <script src="js/fakturaValg.js?v=22"></script>
-  <script src="js/backup.js?v=22"></script>
-  <script src="js/lonn.js?v=22"></script>
-  <script src="js/tester.js?v=22"></script>
-  <script src="js/varer.js?v=22"></script>
-  <script src="js/app.js?v=22"></script>
+<script src="js/core/config.js?v=20"></script>
+<script src="js/core/moduler.js?v=20"></script>
+<script src="js/core/state.js?v=20"></script>
+<script src="js/navigation.js?v=20"></script>
+<script src="js/auth.js?v=20"></script>
+<script src="js/kunder.js?v=20"></script>
+<script src="js/prosjekter.js?v=20"></script>
+<script src="js/ansatte.js?v=20"></script>
+<script src="js/firma.js?v=20"></script>
+<script src="js/timer.js?v=20"></script>
+<script src="js/utils.js?v=20"></script>
+<script src="js/fakturaData.js?v=20"></script>
+<script src="js/pdfLayout.js?v=20"></script>
+<script src="js/fakturaPdf.js?v=20"></script>
+<script src="js/faktura.js?v=20"></script>
+<script src="js/fakturaValg.js?v=20"></script>
+<script src="js/backup.js?v=20"></script>
+<script src="js/lonn.js?v=20"></script>
+<script src="js/tester.js?v=20"></script>
+<script src="js/varer.js?v=20"></script>
+<script src="js/app.js?v=20"></script>
+<script>
+window.addEventListener("load", function () {
+  const loginKnapp = document.getElementById("loginKnapp");
+  const glemtKnapp = document.getElementById("glemtPassordKnapp");
 
-  <script>
-    window.addEventListener("load", function () {
-      const loginKnapp = document.getElementById("loginKnapp");
-      const glemtKnapp = document.getElementById("glemtPassordKnapp");
-
-      if (loginKnapp) {
-        loginKnapp.onclick = function () {
-          if (typeof loggInn === "function") {
-            loggInn();
-          } else {
-            alert("Feil: loggInn finnes ikke. auth.js er ikke lastet.");
-          }
-        };
+  if (loginKnapp) {
+    loginKnapp.onclick = function () {
+      if (typeof loggInn === "function") {
+        loggInn();
+      } else {
+        alert("Feil: loggInn finnes ikke. auth.js er ikke lastet.");
       }
+    };
+  }
 
-      if (glemtKnapp) {
-        glemtKnapp.onclick = function () {
-          if (typeof glemtPassord === "function") {
-            glemtPassord();
-          } else {
-            alert("Feil: glemtPassord finnes ikke. auth.js er ikke lastet.");
-          }
-        };
+  if (glemtKnapp) {
+    glemtKnapp.onclick = function () {
+      if (typeof glemtPassord === "function") {
+        glemtPassord();
+      } else {
+        alert("Feil: glemtPassord finnes ikke. auth.js er ikke lastet.");
       }
-    });
-  </script>
+    };
+  }
+});
+</script>
 </body>
 </html>
