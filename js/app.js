@@ -27,10 +27,13 @@ koble("tilbakeTilLoginKnapp", "click", tryggFunksjon("visLogin"));
 koble("loggUtKnapp", "click", tryggFunksjon("loggUt"));
 
 koble("visTimerKnapp", "click", tryggFunksjon("visTimerSide"));
+koble("visFakturaKnapp", "click", tryggFunksjon("visFakturaSide"));
+koble("varerKnapp", "click", tryggFunksjon("visVarerSide"));
 koble("visLonnKnapp", "click", tryggFunksjon("visLonnSide"));
 koble("visKundeKnapp", "click", tryggFunksjon("visKundeSide"));
 koble("visAnsattKnapp", "click", tryggFunksjon("visAnsattSide"));
 koble("visFirmaKnapp", "click", tryggFunksjon("visFirmaSide"));
+koble("visBackupKnapp", "click", tryggFunksjon("visBackupSide"));
 koble("visTestKnapp", "click", tryggFunksjon("visTestSide"));
 
 koble("leggTilKundeKnapp", "click", tryggFunksjon("lagreKunde"));
@@ -48,7 +51,9 @@ koble("lagreTimerKnapp", "click", tryggFunksjon("lagreTimer"));
 koble("excelKnapp", "click", tryggFunksjon("eksporterMvaRegneark"));
 koble("pdfKnapp", "click", tryggFunksjon("lagFakturaPdf"));
 koble("kreditnotaKnapp", "click", tryggFunksjon("visKreditnotaPrompt"));
+koble("okonomiOversiktKnapp", "click", tryggFunksjon("visOkonomiOversikt"));
 koble("backupKnapp", "click", tryggFunksjon("backup"));
+koble("lagreBilKnapp", "click", tryggFunksjon("lagreBil"));
 
 koble("kjorLonnKnapp", "click", tryggFunksjon("kjorLonn"));
 koble("lonnsslippKnapp", "click", tryggFunksjon("lagLonnsslipper"));
@@ -113,7 +118,7 @@ function startApp() {
 startApp();
 
 async function stressTest() {
-  const behold = "greknuts@online.no";
+  const behold = window.innloggetEpost || "";
 
   const testEposter = [
     "kurs@jobbsmartkurs.no",
@@ -128,10 +133,17 @@ async function stressTest() {
 
   await supabaseClient.from("timer").delete().neq("id", 0);
 
-  await supabaseClient
+  let slettAnsatteQuery = supabaseClient
     .from("ansatte")
-    .delete()
-    .neq("epost", behold);
+    .delete();
+
+  if (behold) {
+    slettAnsatteQuery = slettAnsatteQuery.neq("epost", behold);
+  } else {
+    slettAnsatteQuery = slettAnsatteQuery.neq("id", 0);
+  }
+
+  await slettAnsatteQuery;
 
   console.log("Gamle data slettet");
 

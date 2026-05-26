@@ -69,6 +69,12 @@ async function lastAnsatte() {
 
   ansatte = data || [];
   window.ansatte = ansatte;
+
+  if (typeof fyllLonnAnsattValg === "function") {
+    fyllLonnAnsattValg(ansatte);
+  }
+
+  if (typeof fyllBilvalg === "function") await fyllBilvalg();
   visAnsatte();
 }
 
@@ -92,6 +98,7 @@ function visAnsatte() {
       ${ansatt.epost || ""}<br>
       ${ansatt.mobil || ansatt.mobile || ""}<br>
       ${ansatt.rolle ? "Rolle: " + ansatt.rolle + "<br>" : ""}
+      ${ansatt.standard_bil_id ? "Standard bil-id: " + ansatt.standard_bil_id + "<br>" : ""}
       <button type="button" class="secondary" onclick="endreAnsatt('${ansatt.id}')">Endre</button>
       <button type="button" class="secondary" onclick="settPassord('${ansatt.id}')">Sett passord</button>
       <button type="button" class="secondary" onclick="slettAnsatt('${ansatt.id}')">Slett</button>
@@ -113,6 +120,7 @@ function endreAnsatt(id) {
   settVerdi("ansattNavn", ansatt.navn);
   settVerdi("ansattEpost", ansatt.epost);
   settVerdi("ansattMobil", ansatt.mobil || ansatt.mobile);
+  settVerdi("ansattStandardBil", ansatt.standard_bil_id || "");
   settVerdi("ansattPersonnr", ansatt.personnr || ansatt.fodselsnr);
   settVerdi("ansattKontonr", ansatt.kontonr);
   settVerdi("ansattRolle", ansatt.rolle);
@@ -145,6 +153,7 @@ async function lagreAnsatt() {
     };
 
     leggTilHvisFinnes(ansatt, "mobil", "ansattMobil");
+    leggTilHvisFinnes(ansatt, "standard_bil_id", "ansattStandardBil");
     leggTilHvisFinnes(ansatt, "personnr", "ansattPersonnr");
     leggTilHvisFinnes(ansatt, "kontonr", "ansattKontonr");
     leggTilHvisFinnes(ansatt, "rolle", "ansattRolle");
@@ -253,6 +262,7 @@ function nyttAnsattSkjema() {
   settVerdi("ansattNavn", "");
   settVerdi("ansattEpost", "");
   settVerdi("ansattMobil", "");
+  settVerdi("ansattStandardBil", "");
   settVerdi("ansattPersonnr", "");
   settVerdi("ansattKontonr", "");
   settVerdi("ansattRolle", "ansatt");

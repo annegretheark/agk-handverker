@@ -513,48 +513,86 @@ async function testRettigheter() {
 async function slettKunTestdata() {
   nullstillTestLogg();
 
-  if (!confirm("Slette kun testdata? Dette sletter IKKE firma og IKKE greknuts@online.no.")) {
+  if (!confirm("Slette kun testdata? Dette sletter IKKE firma.")) {
     return;
   }
 
   try {
     testLogg("Sletter testdata...", true);
-    // Prosjekter må slettes før kunder på grunn av foreign key
-await supabaseClient
-  .from("prosjekter")
-  .delete()
-  .not("id", "is", null);
 
     const { data: testKunder, error: kundeFinnFeil } = await supabaseClient
       .from("kunder")
       .select("id")
-      .like("navn", "TEST%");
+      .or("navn.like.TEST%,kundenr.like.TEST%,kundenr.like.T%,kundenr.like.D%");
 
     if (kundeFinnFeil) throw kundeFinnFeil;
 
     const kundeIder = (testKunder || []).map(k => k.id);
 
     if (kundeIder.length > 0) {
-      const timerKundeRes = await supabaseClient
+      let res;
+
+      res = await supabaseClient
+        .from("faktura_utlegg")
+        .delete()
+        .in("kunde_id", kundeIder);
+
+      if (res.error) {
+        testLogg("OBS: Kunne ikke slette test-utlegg: " + res.error.message);
+      } else {
+        testLogg("Slettet test-utlegg.", true);
+      }
+
+      res = await supabaseClient
+        .from("faktura_varer")
+        .delete()
+        .in("kunde_id", kundeIder);
+
+      if (res.error) {
+        testLogg("OBS: Kunne ikke slette test-fakturavarer: " + res.error.message);
+      } else {
+        testLogg("Slettet test-fakturavarer.", true);
+      }
+
+      res = await supabaseClient
+        .from("fakturaer")
+        .delete()
+        .in("kunden_id", kundeIder);
+
+      if (res.error) {
+        testLogg("OBS: Kunne ikke slette testfakturaer på kunde: " + res.error.message);
+      } else {
+        testLogg("Slettet testfakturaer på testkunder.", true);
+      }
+
+      res = await supabaseClient
         .from("timer")
         .delete()
         .in("kunde_id", kundeIder);
 
-      if (timerKundeRes.error) throw timerKundeRes.error;
+      if (res.error) throw res.error;
 
       testLogg("Slettet timer knyttet til testkunder.", true);
+
+      // Prosjekter må slettes før kunder på grunn av foreign key.
+      res = await supabaseClient
+        .from("prosjekter")
+        .delete()
+        .in("kunde_id", kundeIder);
+
+      if (res.error) throw res.error;
+
+      testLogg("Slettet prosjekter knyttet til testkunder.", true);
     }
 
     let res = await supabaseClient
       .from("timer")
       .delete()
-      .or("beskrivelse.like.STRESSTEST%,beskrivelse.like.DOBBELTTEST%");
+      .or("beskrivelse.like.STRESSTEST%,beskrivelse.like.DOBBELTTEST%,beskrivelse.like.STRESSTEST FAKTURA%");
 
     if (res.error) throw res.error;
 
     testLogg("Slettet testtimer.", true);
-    res = await supabaseClient
-    .from("fakturaer")
 
     res = await supabaseClient
       .from("fakturaer")
@@ -576,21 +614,24 @@ await supabaseClient
       if (res.error) throw res.error;
 
       testLogg("Slettet testkunder.", true);
+    } else {
+      testLogg("Fant ingen testkunder å slette.", true);
     }
 
     // Testansatte beholdes.
-// Nye stresstester bruker eksisterende ansatte.
+    // Nye stresstester bruker eksisterende ansatte.
 
     if (typeof lastTimer === "function") await lastTimer();
     if (typeof lastKunder === "function") await lastKunder();
     if (typeof lastAnsatte === "function") await lastAnsatte();
 
-    testLogg("Kun testdata slettet. Firma og greknuts er beholdt.", true);
+    testLogg("Kun testdata slettet. Firma er beholdt.", true);
 
   } catch (err) {
     testLogg("SLETTING FEIL: " + err.message);
   }
 }
+
 async function lagStresstestFakturaData() {
   nullstillTestLogg();
   testLogg("Starter faktura-stresstest...", true);

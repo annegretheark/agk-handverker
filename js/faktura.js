@@ -480,12 +480,22 @@ function grupperTimerPerKundeOgProsjekt(timerListe) {
 }
 
 async function lagFakturaPdf() {
-  const melding = document.getElementById("timerMelding");
+  const melding =
+    document.getElementById("fakturaMelding") ||
+    document.getElementById("timerMelding");
 
   try {
     const maaned = hentValgtMaaned();
     const firma = await hentFirmaData();
     const valgtKunde = hentValgtKunde();
+
+    if (!valgtKunde) {
+      if (melding) {
+        melding.textContent = "Velg kunde før du lager faktura.";
+      }
+      alert("Velg kunde før du lager faktura.");
+      return;
+    }
 
     const timerForMaaned =
       (window.timer || [])
@@ -496,10 +506,10 @@ async function lagFakturaPdf() {
   const direkteVarer = await hentDirekteFakturaVarer(valgtKunde);
   const direkteUtlegg = await hentDirekteFakturaUtlegg(valgtKunde);
 
-    if (!timerForMaaned.length && !direkteVarer.length) {
+    if (!timerForMaaned.length && !direkteVarer.length && !direkteUtlegg.length) {
       if (melding) {
         melding.textContent =
-          "Fant ingen fakturerbare timer eller direkte varelinjer. De kan allerede være fakturert.";
+          "Fant ingen fakturerbare timer, direkte varelinjer eller utlegg på valgt kunde. De kan allerede være fakturert.";
       }
 
       return;
@@ -538,7 +548,7 @@ async function lagFakturaPdf() {
   }
     if (melding) {
       melding.textContent =
-        "Faktura PDF laget per kunde/prosjekt. Timer og direkte varelinjer er sperret mot ny fakturering.";
+        "Faktura PDF laget for valgt kunde. Timer, varelinjer og utlegg er sperret mot ny fakturering.";
     }
 
     if (typeof fyllKreditnotaFakturaValg === "function") {

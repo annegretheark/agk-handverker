@@ -5,11 +5,16 @@ const TABELLER = [
   "ansatte",
   "kunder",
   "varer",
+  "biler",
+  "bil_varer",
+  "lager_bevegelser",
   "prosjekter",
   "timer",
   "trekk_typer",
   "ansatt_trekk",
-  "fakturaer"
+  "fakturaer",
+  "faktura_varer",
+  "faktura_utlegg"
 ];
 
 async function hentBackupData() {
@@ -71,7 +76,7 @@ async function lagreBackupFil(
       { type: "application/json" }
     );
 
-  if (window.showSaveFilePicker && prefix !== "NODBACKUP_for_restore") {s
+  if (window.showSaveFilePicker && prefix !== "NODBACKUP_for_restore") {
 
     const fil =
       await window.showSaveFilePicker({
@@ -226,11 +231,16 @@ async function importerBackup(event) {
       "ansatte",
       "kunder",
       "varer",
+      "biler",
+      "bil_varer",
+      "lager_bevegelser",
       "prosjekter",
       "timer",
       "trekk_typer",
       "ansatt_trekk",
-      "fakturaer"
+      "fakturaer",
+      "faktura_varer",
+      "faktura_utlegg"
     ];
 
     for (const tabell of rekkefolge) {
@@ -303,9 +313,8 @@ async function importerBackup(event) {
 function visBackupStatus(tekst) {
 
   const melding =
-    document.getElementById(
-      "timerMelding"
-    );
+    document.getElementById("backupMelding") ||
+    document.getElementById("timerMelding");
 
   if (melding) {
     melding.textContent = tekst;

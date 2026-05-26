@@ -1,6 +1,5 @@
 console.log("lonn.js er lastet");
 console.log("NY LONNJS LASTET 18 MAI");
-alert("NY LONNJS LASTET");
 
 let sisteLonnData = [];
 
@@ -45,6 +44,30 @@ function dagensPeriode() {
     til: `${aar}-${mnd}-${String(sisteDag).padStart(2, "0")}`
   };
 }
+
+
+function fyllLonnAnsattValg(ansattListe) {
+  const select = document.getElementById("lonnAnsattValg");
+  if (!select) return;
+
+  const valgt = select.value;
+  const liste = ansattListe || window.ansatte || [];
+
+  select.innerHTML = '<option value="">Alle ansatte</option>';
+
+  liste.forEach(ansatt => {
+    const option = document.createElement("option");
+    option.value = ansatt.id;
+    option.textContent = ansatt.navn || ansatt.epost || ("Ansatt " + ansatt.id);
+    select.appendChild(option);
+  });
+
+  if (valgt && Array.from(select.options).some(o => String(o.value) === String(valgt))) {
+    select.value = valgt;
+  }
+}
+
+window.fyllLonnAnsattValg = fyllLonnAnsattValg;
 
 function hentLonnPeriode() {
   const standard = dagensPeriode();
@@ -168,11 +191,15 @@ async function hentOgBeregnLonn() {
   if (timerRes.error) throw new Error(timerRes.error.message);
   if (ansatteRes.error) throw new Error(ansatteRes.error.message);
 
+  const valgtAnsattId = hentVerdiFraElement("lonnAnsattValg");
+
   const timerader = (timerRes.data || [])
     .filter(t => datoInnenforPeriode(t, periode.fra, periode.til))
-    .filter(t => !erUtbetalt(t));
+    .filter(t => !erUtbetalt(t))
+    .filter(t => !valgtAnsattId || String(t.ansatt_id) === String(valgtAnsattId));
 
   const ansatte = ansatteRes.data || [];
+  fyllLonnAnsattValg(ansatte);
   const ansatteMap = new Map(ansatte.map(a => [String(a.id), a]));
   const grupper = new Map();
 

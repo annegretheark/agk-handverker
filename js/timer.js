@@ -3,6 +3,144 @@ console.log("NY timer.js er lastet");
 const MAKS_TIMER_PER_DAG = 24;
 const MAKS_TIMER_PER_MANED = 300;
 
+
+function hentAktivBilIdFraSkjerm() {
+  const bilValg = document.getElementById("bilValg");
+
+  // Hvis aktiv bil ikke er satt ennå, men dropdownen har en valgt bil, bruk den.
+  if ((!window.aktivBilId || window.aktivBilId === "") && bilValg && bilValg.value) {
+    const valgtOption = bilValg.options[bilValg.selectedIndex];
+    window.aktivBilId = bilValg.value;
+    window.aktivBilNavn = valgtOption ? valgtOption.textContent : "";
+    localStorage.setItem("aktivBilId", window.aktivBilId);
+    localStorage.setItem("aktivBilNavn", window.aktivBilNavn || "");
+  }
+
+  return window.aktivBilId || bilValg?.value || "";
+}
+
+function oppdaterAktivBilVisning() {
+  const bilValg = document.getElementById("bilValg");
+  const info = document.getElementById("aktivBilInfo");
+
+  if (bilValg && window.aktivBilId) {
+    bilValg.value = String(window.aktivBilId);
+  }
+
+  if (bilValg && bilValg.value && !window.aktivBilNavn) {
+    const valgtOption = bilValg.options[bilValg.selectedIndex];
+    window.aktivBilNavn = valgtOption ? valgtOption.textContent : "";
+  }
+
+  const tekst = window.aktivBilNavn
+    ? "Aktiv bil: " + window.aktivBilNavn
+    : "Ingen aktiv bil valgt.";
+
+  if (info) info.textContent = tekst;
+}
+
+
+async function fyllVarevalgFraAktivBil() {
+  const vareValg = document.getElementById("vareValg");
+  const prisFelt = document.getElementById("varePris");
+  const aktivBilId = hentAktivBilIdFraSkjerm();
+
+  if (!vareValg) return;
+  vareValg.innerHTML = '<option value="">Velg vare fra bil</option>';
+
+  if (!aktivBilId) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Velg aktiv bil først";
+    vareValg.appendChild(opt);
+    return;
+  }
+
+  const { data, error } = await supabaseClient
+    .from("bil_varer")
+    .select("id, antall, varer(id, varenr, navn, pris, utpris, mva_sats)")
+    .eq("bil_id", aktivBilId)
+    .gt("antall", 0)
+    .order("id", { ascending: true });
+
+  if (error) {
+    console.error("Feil ved henting av varer fra bil:", error);
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Feil ved henting av bil-lager";
+    vareValg.appendChild(opt);
+    return;
+  }
+
+  if (!data || !data.length) {
+    const opt = document.createElement("option");
+    opt.value = "";
+    opt.textContent = "Ingen varer på valgt bil";
+    vareValg.appendChild(opt);
+    return;
+  }
+
+  data.forEach(rad => {
+    const v = rad.varer || {};
+    const pris = Number(v.pris ?? v.utpris ?? 0);
+    const opt = document.createElement("option");
+    opt.value = v.id;
+    opt.dataset.pris = String(pris);
+    opt.dataset.antallBil = String(rad.antall || 0);
+    opt.dataset.kilde = "bil";
+    opt.dataset.bilVareId = String(rad.id || "");
+    opt.textContent = `${v.varenr || ""} ${v.navn || ""} - i bil: ${rad.antall} - ${pris.toFixed(2)} kr`;
+    vareValg.appendChild(opt);
+  });
+
+  vareValg.onchange = function () {
+    const valgtOption = vareValg.options[vareValg.selectedIndex];
+    const pris = valgtOption ? valgtOption.dataset.pris : "";
+    if (prisFelt && pris !== undefined && pris !== "") prisFelt.value = pris;
+  };
+}
+
+function heltallFraFelt(id, standardVerdi = 0) {
+  const felt = document.getElementById(id);
+  const tekst = String(felt?.value ?? standardVerdi).replace(",", ".").trim();
+  const tall = Number(tekst);
+  return Number.isInteger(tall) ? tall : NaN;
+}
+
+async function byttAktivBil() {
+  const bilValg = document.getElementById("bilValg");
+  if (!bilValg) return;
+
+  if (!bilValg.value) {
+    alert("Velg bil først.");
+    return;
+  }
+
+  const valgtOption = bilValg.options[bilValg.selectedIndex];
+  const bilNavn = valgtOption ? valgtOption.textContent : "";
+
+  if (typeof window.settAktivBil === "function") {
+    window.settAktivBil(bilValg.value, bilNavn);
+  } else {
+    window.aktivBilId = bilValg.value;
+    window.aktivBilNavn = bilNavn;
+    localStorage.setItem("aktivBilId", window.aktivBilId);
+    localStorage.setItem("aktivBilNavn", window.aktivBilNavn || "");
+    oppdaterAktivBilVisning();
+  }
+
+  await fyllVarevalgFraAktivBil();
+
+  if (window.innloggetAnsattId && confirm("Skal denne bilen lagres som standard bil for brukeren?")) {
+    const { error } = await supabaseClient
+      .from("ansatte")
+      .update({ standard_bil_id: bilValg.value })
+      .eq("id", window.innloggetAnsattId);
+
+    if (error) alert("Kunne ikke lagre standard bil: " + error.message);
+  }
+}
+
 function hentTimerMelding() {
   return document.getElementById("timerMelding") || document.getElementById("skjemaMelding");
 }
@@ -482,6 +620,7 @@ function lagMvaExcel() {
 async function lagreVarelinjeTilFaktura() {
   const melding = hentTimerMelding();
 
+  const bilValg = document.getElementById("bilValg");
   const vareValg = document.getElementById("vareValg");
   const antallFelt = document.getElementById("vareAntall");
   const prisFelt = document.getElementById("varePris");
@@ -501,8 +640,37 @@ async function lagreVarelinjeTilFaktura() {
     return;
   }
 
+  const aktivBilId = hentAktivBilIdFraSkjerm();
+
+  if (!aktivBilId) {
+    alert("Velg aktiv bil/lager først. Varer trekkes fra valgt bil.");
+    return;
+  }
+
+  if (bilValg) bilValg.value = String(aktivBilId);
+
   if (!vareValg || !vareValg.value) {
-    alert("Velg vare først.");
+    alert("Velg vare først. Du kan bare velge varer som ligger på aktiv bil.");
+    return;
+  }
+
+  const valgtVareOption = vareValg.options[vareValg.selectedIndex];
+  if (!valgtVareOption || valgtVareOption.dataset.kilde !== "bil") {
+    alert("Denne varen kan ikke selges her. Varelisten må være fra aktiv bil, ikke hovedlager.");
+    await fyllVarevalgFraAktivBil();
+    return;
+  }
+
+  const antallPaValgtBil = Number(valgtVareOption.dataset.antallBil || 0);
+
+  const antall = heltallFraFelt("vareAntall", 1);
+  if (!Number.isInteger(antall) || antall <= 0) {
+    alert("Antall må være et heltall større enn 0.");
+    return;
+  }
+
+  if (antallPaValgtBil < antall) {
+    alert(`Du kan ikke selge mer enn bilen har. Bilen har ${antallPaValgtBil}, du prøver å selge ${antall}.`);
     return;
   }
 
@@ -517,8 +685,25 @@ async function lagreVarelinjeTilFaktura() {
     return;
   }
 
-  const antall = Number(antallFelt?.value || 1);
-  const pris = Number(prisFelt?.value || 0) || Number(vare.pris || 0);
+  const { data: bilVare, error: bilVareFeil } = await supabaseClient
+    .from("bil_varer")
+    .select("*")
+    .eq("bil_id", aktivBilId)
+    .eq("vare_id", vareValg.value)
+    .maybeSingle();
+
+  if (bilVareFeil) {
+    alert("Feil ved sjekk av bil-lager: " + bilVareFeil.message);
+    return;
+  }
+
+  const antallIBil = Number(bilVare?.antall || 0);
+  if (!bilVare || antallIBil < antall) {
+    alert(`Ikke nok vare i valgt bil. Bilen har ${antallIBil}, du prøver å selge ${antall}.`);
+    return;
+  }
+
+  const pris = Number(prisFelt?.value || 0) || Number(vare.pris || vare.utpris || 0);
 
   const { error } = await supabaseClient
     .from("faktura_varer")
@@ -536,11 +721,36 @@ async function lagreVarelinjeTilFaktura() {
     return;
   }
 
+  const nyttBilAntall = antallIBil - antall;
+  const { error: trekkFeil } = await supabaseClient
+    .from("bil_varer")
+    .update({ antall: nyttBilAntall })
+    .eq("id", bilVare.id);
+
+  if (trekkFeil) {
+    alert("Varelinje ble lagt på faktura, men lager ble ikke trukket: " + trekkFeil.message);
+    return;
+  }
+
+  if (typeof window.registrerLagerBevegelse === "function") {
+    await window.registrerLagerBevegelse({
+      vare_id: vareValg.value,
+      bil_id: aktivBilId,
+      fra_type: "bil",
+      fra_id: aktivBilId,
+      til_type: "faktura",
+      til_id: null,
+      antall,
+      type: "salg",
+      kommentar: "Vare solgt/lagt på faktura"
+    });
+  }
+
   const liste = document.getElementById("varelinjeListe");
   if (liste) {
     const div = document.createElement("div");
     div.textContent =
-      "Lagt til: " +
+      "Lagt til og trukket fra bil-lager: " +
       (vare.varenr || "") +
       " " +
       (vare.navn || "") +
@@ -556,8 +766,11 @@ async function lagreVarelinjeTilFaktura() {
   if (prisFelt) prisFelt.value = "0";
 
   if (melding) {
-    melding.textContent = "Vare lagt til. Du kan legge til flere varer.";
+    melding.textContent = "Vare lagt til på faktura og trukket fra valgt bil.";
   }
+
+  if (typeof window.hentBilLager === "function") await window.hentBilLager();
+  await fyllVarevalgFraAktivBil();
 }
 
 function kobleVarelinjeKnapp() {
@@ -568,6 +781,31 @@ function kobleVarelinjeKnapp() {
     await lagreVarelinjeTilFaktura();
   };
 }
+
+
+document.addEventListener("DOMContentLoaded", () => {
+  const bilValg = document.getElementById("bilValg");
+  const byttBilKnapp = document.getElementById("byttBilKnapp");
+
+  if (bilValg) {
+    bilValg.addEventListener("change", () => {
+      const valgtOption = bilValg.options[bilValg.selectedIndex];
+      window.aktivBilId = bilValg.value || "";
+      window.aktivBilNavn = valgtOption ? valgtOption.textContent : "";
+      oppdaterAktivBilVisning();
+      fyllVarevalgFraAktivBil();
+    });
+  }
+
+  if (byttBilKnapp) byttBilKnapp.addEventListener("click", byttAktivBil);
+  oppdaterAktivBilVisning();
+  fyllVarevalgFraAktivBil();
+});
+
+window.oppdaterAktivBilVisning = oppdaterAktivBilVisning;
+window.byttAktivBil = byttAktivBil;
+window.hentAktivBilIdFraSkjerm = hentAktivBilIdFraSkjerm;
+window.fyllVarevalgFraAktivBil = fyllVarevalgFraAktivBil;
 
 const excelKnapp = document.getElementById("excelKnapp");
 if (excelKnapp) {

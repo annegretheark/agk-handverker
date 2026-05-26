@@ -31,6 +31,7 @@ async function lastKunder() {
 
   visKunder();
   fyllKundeDropdown();
+  fyllFakturaKundeDropdown();
 }
 
 async function lagreKunde() {
@@ -167,6 +168,9 @@ function visKunder() {
   kunder.forEach(kunde => {
     const div = document.createElement("div");
     div.className = "card";
+    div.style.padding = "14px";
+    div.style.marginBottom = "14px";
+    div.style.borderBottom = "1px solid #444";
 
     const kundeProsjekter = prosjekter.filter(p =>
       String(p.kunde_id || "") === String(kunde.id || "")
@@ -174,46 +178,50 @@ function visKunder() {
 
     const prosjektHtml = kundeProsjekter.length
       ? `
-        <br>
-        <strong>Prosjekter:</strong>
-        <ul>
-          ${kundeProsjekter.map(p => `
-            <li>
-              ${p.prosjektnr || ""} ${p.navn || ""}
-              ${p.beskrivelse ? `<br><small>${p.beskrivelse}</small>` : ""}
-            </li>
-          `).join("")}
-        </ul>
+        <div style="margin-top:10px;">
+          <strong>Prosjekter:</strong>
+          <ul style="margin-top:6px;">
+            ${kundeProsjekter.map(p => `
+              <li>
+                ${p.prosjektnr || ""} ${p.navn || ""}
+                ${p.beskrivelse ? `<br><small>${p.beskrivelse}</small>` : ""}
+              </li>
+            `).join("")}
+          </ul>
+        </div>
       `
-      : `<br><em>Ingen prosjekter</em><br>`;
+      : `
+        <div style="margin-top:10px;">
+          <em>Ingen prosjekter</em>
+        </div>
+      `;
 
     div.innerHTML = `
-      <strong>${kunde.navn || ""}</strong>
-      <br>
-      Kundenr: ${kunde.kundenr || kunde.kunde_nr || ""}
-      <br>
-      ${kunde.adresse || ""}
-      <br>
-      ${kunde.epost || ""}
-      <br>
-      ${kunde.kontaktperson || ""}
-      <br>
-      ${kunde.kontonr || ""}
-      <br>
+      <div style="line-height:1.35;">
+        <strong>${kunde.navn || ""}</strong><br>
+        Kundenr: ${kunde.kundenr || kunde.kunde_nr || ""}<br>
+        ${kunde.adresse || ""}<br>
+        ${kunde.epost || ""}<br>
+        ${kunde.kontaktperson || ""}<br>
+        ${kunde.kontonr || ""}
+      </div>
+
+      <div style="margin-top:10px; margin-bottom:4px;">
+        <button
+          type="button"
+          class="secondary"
+          onclick="redigerKunde('${kunde.id}')">
+          Rediger
+        </button>
+      </div>
 
       ${prosjektHtml}
-
-      <button
-        type="button"
-        class="secondary"
-        onclick="redigerKunde('${kunde.id}')">
-        Rediger
-      </button>
     `;
 
     liste.appendChild(div);
   });
 }
+
 
 function redigerKunde(id) {
   const kunde = kunder.find(k => String(k.id) === String(id));
@@ -289,6 +297,32 @@ function fyllKundeDropdown() {
   if (kundeNrVisning) kundeNrVisning.value = "";
 }
 
+function fyllFakturaKundeDropdown() {
+  const valg = document.getElementById("fakturaKundeValg");
+  if (!valg) return;
+
+  const gammelVerdi = valg.value || "";
+
+  valg.innerHTML = "";
+
+  const tomOption = document.createElement("option");
+  tomOption.value = "";
+  tomOption.textContent = "Velg kunde";
+  valg.appendChild(tomOption);
+
+  kunder.forEach(kunde => {
+    const option = document.createElement("option");
+    option.value = kunde.id;
+    const nr = kunde.kundenr || kunde.kunde_nr || kunde.id || "";
+    option.textContent = nr ? nr + " - " + (kunde.navn || "") : (kunde.navn || "");
+    valg.appendChild(option);
+  });
+
+  if (gammelVerdi) {
+    valg.value = gammelVerdi;
+  }
+}
+
 function visKundeNavn() {
   const valg = document.getElementById("kundeValg");
   if (!valg) return;
@@ -305,6 +339,7 @@ window.kunder = kunder;
 window.prosjekter = prosjekter;
 
 window.lastKunder = lastKunder;
+window.fyllFakturaKundeDropdown = fyllFakturaKundeDropdown;
 window.lagreKunde = lagreKunde;
 window.redigerKunde = redigerKunde;
 window.nullstillKundeSkjema = nullstillKundeSkjema;

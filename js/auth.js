@@ -2,6 +2,88 @@ let innloggetEpost = "";
 let innloggetAnsattId = "";
 window.innloggetAnsattId = "";
 
+window.aktivBilId = window.aktivBilId || "";
+window.aktivBilNavn = window.aktivBilNavn || "";
+
+function settAktivBil(bilId, bilNavn) {
+  window.aktivBilId = bilId ? String(bilId) : "";
+  window.aktivBilNavn = bilNavn || "";
+
+  if (window.aktivBilId) {
+    localStorage.setItem("aktivBilId", window.aktivBilId);
+    localStorage.setItem("aktivBilNavn", window.aktivBilNavn);
+  } else {
+    localStorage.removeItem("aktivBilId");
+    localStorage.removeItem("aktivBilNavn");
+  }
+
+  if (typeof window.oppdaterAktivBilVisning === "function") {
+    window.oppdaterAktivBilVisning();
+  }
+}
+
+async function velgAktivBilVedInnlogging(ansattData) {
+  try {
+    const { data: biler, error } = await supabaseClient
+      .from("biler")
+      .select("*")
+      .order("navn", { ascending: true });
+
+    if (error || !biler || !biler.length) {
+      settAktivBil("", "");
+      return;
+    }
+
+    const standardBilId = ansattData?.standard_bil_id || ansattData?.bil_id || "";
+
+    if (standardBilId) {
+      const bil = biler.find(b => String(b.id) === String(standardBilId));
+      if (bil) {
+        settAktivBil(bil.id, `${bil.navn || "Bil"}${bil.regnr ? " - " + bil.regnr : ""}`);
+        return;
+      }
+    }
+
+    const lagretBilId = localStorage.getItem("aktivBilId") || "";
+    if (lagretBilId) {
+      const bil = biler.find(b => String(b.id) === String(lagretBilId));
+      if (bil) {
+        settAktivBil(bil.id, `${bil.navn || "Bil"}${bil.regnr ? " - " + bil.regnr : ""}`);
+        return;
+      }
+    }
+
+    if (biler.length === 1) {
+      const bil = biler[0];
+      settAktivBil(bil.id, `${bil.navn || "Bil"}${bil.regnr ? " - " + bil.regnr : ""}`);
+      if (ansattData?.id) {
+        await supabaseClient.from("ansatte").update({ standard_bil_id: bil.id }).eq("id", ansattData.id);
+      }
+      return;
+    }
+
+    const tekst = biler
+      .map((b, i) => `${i + 1}: ${b.navn || "Bil"}${b.regnr ? " - " + b.regnr : ""}`)
+      .join("\n");
+
+    const svar = prompt("Velg bil for denne arbeidsøkten:\n\n" + tekst + "\n\nSkriv nummer:");
+    const indeks = Number(svar) - 1;
+
+    if (Number.isInteger(indeks) && biler[indeks]) {
+      const bil = biler[indeks];
+      settAktivBil(bil.id, `${bil.navn || "Bil"}${bil.regnr ? " - " + bil.regnr : ""}`);
+
+      if (ansattData?.id && confirm("Skal denne bilen lagres som standard bil for brukeren?")) {
+        await supabaseClient.from("ansatte").update({ standard_bil_id: bil.id }).eq("id", ansattData.id);
+      }
+    } else {
+      settAktivBil("", "");
+    }
+  } catch (e) {
+    console.warn("Kunne ikke velge aktiv bil:", e);
+  }
+}
+
 function skjulForVanligBruker() {
 
   const skjulKnapper = [
@@ -109,12 +191,8 @@ async function loggInn() {
   window.innloggetAnsattId = "";
 
   erAdmin = false;
-
-  if (vilAdmin && email === "greknuts@online.no") {
-    erAdmin = true;
-  }
-
-  const {
+  window.erAdmin = false;
+const {
     data: ansattRader,
     error: ansattError
   } = await supabaseClient
@@ -150,13 +228,18 @@ async function loggInn() {
     window.innloggetAnsattId = ansattData.id;
   }
 
-  if (vilAdmin && !erAdmin) {
+  await velgAktivBilVedInnlogging(ansattData);
 
+  if (vilAdmin) {
     if (
       ansattData &&
-      String(ansattData.rolle).toLowerCase() === "admin"
+      String(ansattData.rolle || "").toLowerCase() === "admin"
     ) {
       erAdmin = true;
+      window.erAdmin = true;
+    } else {
+      erAdmin = false;
+      window.erAdmin = false;
     }
   }
 
@@ -179,16 +262,18 @@ async function loggInn() {
     return;
   }
 
-  visApp();
+  await visApp();
 
   if (erAdmin) {
     visAltForAdmin();
+    if (typeof skjulAlleSider === "function") {
+      skjulAlleSider();
+    }
   } else {
     skjulForVanligBruker();
-  }
-
-  if (typeof visTimerSide === "function") {
-    visTimerSide();
+    if (typeof visTimerSide === "function") {
+      visTimerSide();
+    }
   }
 }
 
@@ -199,12 +284,14 @@ async function loggUt() {
   document.getElementById("loginPassord").value = "";
 
   erAdmin = false;
+  window.erAdmin = false;
 
   innloggetEpost = "";
   innloggetAnsattId = "";
 
   window.innloggetEpost = "";
   window.innloggetAnsattId = "";
+  settAktivBil("", "");
 
   visLogin();
 }
@@ -333,6 +420,7 @@ async function lagreNyttPassord() {
 
   window.innloggetEpost = "";
   window.innloggetAnsattId = "";
+  settAktivBil("", "");
 
   visLogin();
 }
@@ -360,3 +448,5 @@ document.addEventListener("DOMContentLoaded", () => {
     .getElementById("lagreNyttPassordKnapp")
     ?.addEventListener("click", lagreNyttPassord);
 });
+window.settAktivBil = settAktivBil;
+window.velgAktivBilVedInnlogging = velgAktivBilVedInnlogging;

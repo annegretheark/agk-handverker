@@ -9,17 +9,26 @@ function hentValgtMaaned() {
 }
 
 function hentValgtKunde() {
+  const fakturaKundeValg = document.getElementById("fakturaKundeValg");
   const kundeValg = document.getElementById("kundeValg");
 
-  if (!kundeValg || !kundeValg.value) {
+  const valgtVerdi =
+    fakturaKundeValg && fakturaKundeValg.value
+      ? fakturaKundeValg.value
+      : kundeValg && kundeValg.value
+        ? kundeValg.value
+        : "";
+
+  if (!valgtVerdi) {
     return null;
   }
 
-  const valgtId = String(kundeValg.value);
+  const valgtId = String(valgtVerdi);
 
   return (window.kunder || []).find(k =>
     String(k.id || "") === valgtId ||
-    String(k.kundenr || "") === valgtId
+    String(k.kundenr || "") === valgtId ||
+    String(k.kunde_nr || "") === valgtId
   ) || null;
 }
 
